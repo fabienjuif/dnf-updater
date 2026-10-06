@@ -1,37 +1,44 @@
+## [1.0.3] - 2026-10-06
+
+### Added
+- **Plugin Version in Header**: Display installed version next to panel title in `panel.luau`.
+
+### Fixed
+- **Flatpak Ghost Updates**: Added `--app` flag to `flatpak remote-ls --updates` to filter unmatched theme extensions and EOL runtimes.
+- **Flatpak Selection Crash**: Defined `flatpakCount` scope in `updateFlatpak()` to fix nil comparison crash and infinite loading.
+- **Background Timeouts**: Set explicit timeouts in `noctalia.runAsync()` (60s updates, 30s checks) to prevent premature cancellation under default 5s limit.
+- **Timeout Error Reporting**: Added `result.timedOut` handling to DNF and Flatpak update errors advising terminal execution.
+
 ## [1.0.2] - 2026-09-22
 
 ### Added
-- **One-Line Installer & Uninstaller**: Added `scripts/install.sh` supporting zero-navigation remote installation (`curl -fsSL ... | sudo bash`), location-agnostic local execution (`sudo ./scripts/install.sh`), automated preflight group checks (`wheel` and `sudo`), SELinux context restoration (`restorecon`), and single-command uninstallation (`--uninstall`).
-- **Makefile Targets**: Added root `Makefile` with standard `install` and `uninstall` targets for build and packaging workflows.
+- **Installer Script**: Added `scripts/install.sh` for remote/local install, group checks (`wheel`/`sudo`), SELinux restore, and uninstallation.
 
 ### Fixed
-- **Check Timeout Mitigation**: Added automatic single-retry logic in `service.luau` when Noctalia flags a timeout on DNF or Flatpak checks, preventing transient timeout error badges while remote metadata caches populate.
-- **Exclusion Regex Modular Stream Support**: Updated `scripts/dnf-updater-helper.sh` exclusion validation regex to support colons (`:`), permitting exclusion of RPM modular streams (e.g. `nodejs:18`) and epochs.
-- **Helper Shebang & Help Flag**: Updated helper shebang to `#!/bin/bash` for deterministic privileged execution, and added `-h`/`--help` usage flags.
-- **Polkit Multi-Distro & Fallthrough Support**: Expanded `polkit/50-dnf-updater.rules` to authorize active local users in either `wheel` or `sudo` groups, and added standard explicit `polkit.Result.NOT_HANDLED` fallback.
-- **Concurrency Guarding**: Added `isChecking` check to `update_dnf` and `update_flatpak` commands in `service.luau` to prevent DNF cache lock contention during automated checks.
-- **Error Capture in Service**: Captured `stdout` on failed DNF transactions if `stderr` is empty, preserving dependency solver messages.
-- **UI Tree & Localization Cleanup**: Removed unsupported `tooltip` properties from `ui.row` elements in `panel.luau` to eliminate Noctalia log warnings, and localized `"Last Checked"` in `widget.luau` via `translations/en.json`.
+- **Check Retry**: Added single-retry on DNF/Flatpak check timeouts to prevent transient error badges during cache refreshes.
+- **Stream Exclusions**: Supported colons in `scripts/dnf-updater-helper.sh` exclusion regex for RPM modules and epochs.
+- **Helper Script**: Set bash shebang and added `-h`/`--help` usage flags to helper script.
+- **Polkit Compatibility**: Allowed both `wheel` and `sudo` groups with standard `NOT_HANDLED` fallback in Polkit rule.
+- **Error Capture**: Captured `stdout` on failed DNF transactions when `stderr` is empty.
 
 ## [1.0.1] - 2026-09-21
 
 ### Security
-- **Scoped Privileged Helper for Passwordless Upgrades**: Replaced the unrestricted `pkexec dnf5` Polkit rule with a dedicated, hardened privileged helper (`scripts/dnf-updater-helper.sh`) and scoped Polkit rule (`polkit/50-dnf-updater.rules`). The helper strictly enforces that only `upgrade` operations with validated `--exclude` arguments can be executed as root, eliminating arbitrary root execution while preserving passwordless background updates as an optional feature.
-- **Dynamic Argument Validation**: Added strict identifier validation for DNF package names (`isValidPackageName`) and Flatpak application IDs / refs (`isValidFlatpakId`) to reject invalid characters and prevent flag or command injection.
-- **Shell-Safe Argument Quoting**: Added `shellQuote` escaping for all dynamic arguments passed into `noctalia.runInTerminal()`.
+- **Helper**: Replaced broad `pkexec dnf5` with scoped `scripts/dnf-updater-helper.sh` restricted to upgrade and validated exclusions.
+- **Input Validation**: Added strict validation for DNF package names and Flatpak refs to prevent command injection.
+- **Shell Quoting**: Added `shellQuote` escaping for dynamic arguments passed to terminal runner.
 
 ### Fixed
-- **Flatpak Update Execution in Terminal**: Chained DNF and Flatpak commands sequentially in a single terminal session (`sudo dnf5 upgrade ... && flatpak update ...`) when "Update All" runs with `update_in_terminal = true`, resolving an issue where back-to-back terminal launches caused Flatpak updates to be dropped.
-- **Flatpak Update Scope & Ref Resolution**: Updated `flatpak update` invocation to run without package arguments when all pending Flatpak updates are selected (ensuring runtimes and dependencies update cleanly), and accurately target explicit refs when a subset is selected.
-- **Total Estimated Update Size**: Added `parseSizeToBytes` and `getPackageDownloadBytes` to parse GLib/Flatpak formatted size strings (accounting for UTF-8 non-breaking spaces and SI/IEC units), correctly incorporating Flatpak download sizes into the total size badge, panel headers, and widget tooltips.
-- **Panel Package Key Consistency**: Standardized Flatpak package keys across selection toggles, row click handlers, and exclusion filters using `getFlatpakKey`.
+- **Terminal Updates**: Chained DNF and Flatpak commands in single terminal session during Update All.
+- **Flatpak Update Scope**: Omitted package arguments when updating all Flatpaks to ensure runtimes update cleanly.
+- **Size Parsing**: Added `parseSizeToBytes` to accurately parse Flatpak byte units and non-breaking spaces.
+- **Package Key Consistency**: Unified Flatpak package keys across toggles, click handlers, and exclusion filters.
 
 ## [1.0.0] - 2026-09-19
 
 ### Added
 - Initial release of DNF Updater.
-- Monitoring for DNF5 system packages and Flatpak application updates.
-- Interactive panel with per-package inclusion/exclusion.
-- Download and installed size estimations.
-- Terminal execution mode and background Polkit execution mode.
-- Bar widget with badge counts and status indicators.
+- DNF5 and Flatpak update monitoring and management.
+- Flyout panel with package selection and size estimation.
+- Terminal and passwordless Polkit background update modes.
+- Status bar widget with update count badges and indicators.

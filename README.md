@@ -30,7 +30,6 @@ Alternatively, if you have cloned the repository locally:
 
 ```sh
 sudo ./scripts/install.sh
-# or: sudo make install
 ```
 
 To remove the helper and Polkit rule later:

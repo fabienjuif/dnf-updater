@@ -251,7 +251,7 @@ local function checkDnf(onFinished, isRetry)
           state.dnf.status = "done"
           state.dnf.error = nil
           onFinished(true)
-        end)
+        end, 30000)
       else
         state.dnf.total_download_bytes = 0
         state.dnf.total_install_bytes = 0
@@ -279,7 +279,7 @@ local function checkDnf(onFinished, isRetry)
         onFinished(true)
       end
     end
-  end)
+  end, 30000)
 end
 
 local function checkFlatpak(onFinished, isRetry)
@@ -312,7 +312,8 @@ local function checkFlatpak(onFinished, isRetry)
   state.flatpak.status = "checking"
   state.flatpak.error = nil
 
-  noctalia.runAsync({ "flatpak", "remote-ls", "--updates", "--columns=name,application,version,branch,origin,installed-size,download-size,ref", "-j" }, function(result)
+  -- ponytail: --app filters unmatched theme/runtime ghost updates; add toggle if user demands runtime tracking
+  noctalia.runAsync({ "flatpak", "remote-ls", "--updates", "--app", "--columns=name,application,version,branch,origin,installed-size,download-size,ref", "-j" }, function(result)
     if result.timedOut then
       if not isRetry then
         print("[dnf-updater] Flatpak check timed out; retrying once...")
@@ -391,7 +392,7 @@ local function checkFlatpak(onFinished, isRetry)
         onFinished(true)
       end
     end
-  end)
+  end, 30000)
 end
 
 local function checkAll(force)
@@ -530,7 +531,9 @@ local function updateDnf(excludedList, onFinished)
     else
       state.dnf.status = "error"
       local errMsg = "DNF upgrade failed"
-      if result.stderr and result.stderr ~= "" then
+      if result.timedOut then
+        errMsg = "DNF upgrade timed out (consider running updates in terminal)"
+      elseif result.stderr and result.stderr ~= "" then
         errMsg = result.stderr
       elseif result.stdout and result.stdout ~= "" then
         errMsg = result.stdout
@@ -539,7 +542,7 @@ local function updateDnf(excludedList, onFinished)
       if onFinished then onFinished(false) end
     end
     publishState()
-  end)
+  end, 60000)
 end
 
 local function updateFlatpak(selectedList, onFinished)
@@ -577,6 +580,8 @@ local function updateFlatpak(selectedList, onFinished)
     return
   end
 
+  local flatpakCount = (state.flatpak and state.flatpak.count) or 0
+
   if updateInTerminal then
     local cmd = "flatpak update"
     if validSelected and #validSelected > 0 and #validSelected < flatpakCount then
@@ -609,11 +614,19 @@ local function updateFlatpak(selectedList, onFinished)
       if onFinished then onFinished(true) end
     else
       state.flatpak.status = "error"
-      state.flatpak.error = result.stderr ~= "" and result.stderr or "Flatpak update failed"
+      local errMsg = "Flatpak update failed"
+      if result.timedOut then
+        errMsg = "Flatpak update timed out (consider running updates in terminal)"
+      elseif result.stderr and result.stderr ~= "" then
+        errMsg = result.stderr
+      elseif result.stdout and result.stdout ~= "" then
+        errMsg = result.stdout
+      end
+      state.flatpak.error = errMsg
       if onFinished then onFinished(false) end
     end
     publishState()
-  end)
+  end, 60000)
 end
 
 local function updateAll(excludedDnf, selectedFlatpaks)
