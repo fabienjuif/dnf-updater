@@ -576,6 +576,9 @@ local function renderFlatpakSection(state)
     if pkg.origin and pkg.origin ~= "" then
       subtitle = subtitle ~= "" and (subtitle .. " · " .. pkg.origin) or pkg.origin
     end
+    if pkg.is_runtime then
+      subtitle = (subtitle ~= "" and (subtitle .. " · ") or "") .. tr("sections.runtime")
+    end
 
     local sizeLabel = (pkg.download_formatted and pkg.download_formatted ~= "") and pkg.download_formatted or (pkg.install_formatted or "")
 

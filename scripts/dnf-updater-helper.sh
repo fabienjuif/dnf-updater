@@ -59,5 +59,9 @@ if [[ -z "$DNF_BIN" ]]; then
     exit 1
 fi
 
-# Execute upgrade w/o interaction
-exec "$DNF_BIN" upgrade -y "${VALID_ARGS[@]}"
+# Execute upgrade w/o interaction, inhibiting sleep/shutdown if systemd-inhibit is available
+if command -v systemd-inhibit >/dev/null 2>&1; then
+    exec systemd-inhibit --what=shutdown:sleep:idle --who="dnf-updater" --why="Performing system package upgrade" "$DNF_BIN" upgrade -y "${VALID_ARGS[@]}"
+else
+    exec "$DNF_BIN" upgrade -y "${VALID_ARGS[@]}"
+fi

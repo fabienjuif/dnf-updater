@@ -33,6 +33,13 @@ description_key = "settings.enable_flatpak.description"
 default = true
 
 [[setting]]
+key = "include_flatpak_runtimes"
+type = "bool"
+label_key = "settings.include_flatpak_runtimes.label"
+description_key = "settings.include_flatpak_runtimes.description"
+default = false
+
+[[setting]]
 key = "show_widget_when_clean"
 type = "bool"
 label_key = "settings.show_widget_when_clean.label"

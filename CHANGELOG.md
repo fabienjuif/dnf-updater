@@ -2,11 +2,13 @@
 
 ### Added
 - **Plugin Version in Header**: Display installed version next to panel title in `panel.luau`.
+- **Flatpak Runtime Updates**: Added `include_flatpak_runtimes` setting and row badge in `panel.luau`.
 
 ### Fixed
 - **Flatpak Ghost Updates**: Added `--app` flag to `flatpak remote-ls --updates` to filter unmatched theme extensions and EOL runtimes.
 - **Flatpak Selection Crash**: Defined `flatpakCount` scope in `updateFlatpak()` to fix nil comparison crash and infinite loading.
-- **Background Timeouts**: Set explicit timeouts in `noctalia.runAsync()` (60s updates, 30s checks) to prevent premature cancellation under default 5s limit.
+- **Background Upgrade Protection**: Raised background transaction timeout to 10m and wrapped helper with `systemd-inhibit` to prevent SIGKILL and mid-upgrade aborts.
+- **Flatpak Parameter Limits**: Deduplicated ref parameters, relaxed ref regex validation, and bypassed arguments on full updates.
 - **Timeout Error Reporting**: Added `result.timedOut` handling to DNF and Flatpak update errors advising terminal execution.
 
 ## [1.0.2] - 2026-09-22
