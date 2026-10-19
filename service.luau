@@ -472,6 +472,7 @@ local function refreshLastUpdate()
     if latest > 0 and latest ~= state.last_update_timestamp then
       state.last_update_timestamp = latest
       publishState()
+      saveState()
     end
   end)
 end
@@ -943,4 +944,6 @@ local restored = loadState()
 publishState()
 if not restored or checkDue() then
   checkAll(true)
+else
+  refreshLastUpdate()
 end
