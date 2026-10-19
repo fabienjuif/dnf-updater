@@ -4,7 +4,7 @@
 > **Fork of [strob3/dnf-updater](https://github.com/strob3/dnf-updater).** `main` here is upstream plus every
 > change proposed back as a PR (persisted check state with weekly intervals, recheck after terminal updates,
 > compact package badges, last check / last full update in the header, `-y` on terminal runs). The plugin id is
-> `fabienjuif/dnf-updater` so it can sit next to the upstream one. To use it:
+> `fabienjuif/dnf-updater` so it can sit next to the upstream one ([how the fork is maintained](FORK.md)). To use it:
 >
 > ```sh
 > git clone https://github.com/fabienjuif/dnf-updater ~/.local/share/noctalia/plugins/dnf-updater
