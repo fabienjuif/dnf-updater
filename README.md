@@ -1,13 +1,23 @@
 # DNF Updater
 ![dnf-updater thumbnail](thumbnail.webp)
 
+> **Fork of [strob3/dnf-updater](https://github.com/strob3/dnf-updater).** `main` here is upstream plus every
+> change proposed back as a PR (persisted check state with weekly intervals, recheck after terminal updates,
+> compact package badges, last check / last full update in the header, `-y` on terminal runs). The plugin id is
+> `fabienjuif/dnf-updater` so it can sit next to the upstream one. To use it:
+>
+> ```sh
+> git clone https://github.com/fabienjuif/dnf-updater ~/.local/share/noctalia/plugins/dnf-updater
+> noctalia msg plugins enable fabienjuif/dnf-updater
+> ```
+
 DNF Updater monitors and manages pending DNF5 and Flatpak updates directly from the Noctalia bar. It provides a lightweight update badge in the bar, per-package selection to skip or apply specific upgrades, download size estimation, and safe execution through Polkit (`pkexec`) or an interactive terminal.
 
 ## Plugin
 
 | Field | Value |
 | --- | --- |
-| ID | `strob3/dnf-updater` |
+| ID | `fabienjuif/dnf-updater` |
 | Entries | Bar widget: `widget`; panel: `panel`; service: `service` |
 
 ## Requirements
@@ -44,7 +54,7 @@ curl -fsSL https://raw.githubusercontent.com/strob3/dnf-updater/main/scripts/ins
 Add the DNF Updater widget to the bar using Noctalia's bar widget picker. Left-click the widget to open the updates panel. You can also toggle the panel or bind it to a compositor shortcut:
 
 ```sh
-noctalia msg panel-toggle strob3/dnf-updater:panel
+noctalia msg panel-toggle fabienjuif/dnf-updater:panel
 ```
 
 ### Shortcuts & Keybindings
@@ -54,19 +64,19 @@ You can also toggle the panel with a hotkey or shell alias:
 **Niri** (`~/.config/niri/config.kdl`):
 ```kdl
 binds {
-    Mod+U { spawn "noctalia" "msg" "panel-toggle" "strob3/dnf-updater:panel"; }
+    Mod+U { spawn "noctalia" "msg" "panel-toggle" "fabienjuif/dnf-updater:panel"; }
 }
 ```
 
 **Hyprland** (`hyprland.conf`):
 ```conf
-bind = $mainMod, U, exec, noctalia msg panel-toggle strob3/dnf-updater:panel
+bind = $mainMod, U, exec, noctalia msg panel-toggle fabienjuif/dnf-updater:panel
 ```
 
 **Shell Alias** (`~/.bashrc` or `~/.zshrc`):
 ```sh
-alias dnf-updater="noctalia msg panel-toggle strob3/dnf-updater:panel"
-alias dnf-check="noctalia msg plugin strob3/dnf-updater:service service check"
+alias dnf-updater="noctalia msg panel-toggle fabienjuif/dnf-updater:panel"
+alias dnf-check="noctalia msg plugin fabienjuif/dnf-updater:service service check"
 ```
 
 ### Controls
@@ -100,10 +110,10 @@ Trigger background service operations using `noctalia msg`:
 
 ```sh
 # Check for updates immediately
-noctalia msg plugin strob3/dnf-updater:service service check
+noctalia msg plugin fabienjuif/dnf-updater:service service check
 
 # Apply updates for all pending packages
-noctalia msg plugin strob3/dnf-updater:service service update
+noctalia msg plugin fabienjuif/dnf-updater:service service update
 ```
 
 ## Notes

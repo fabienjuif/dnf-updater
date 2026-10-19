@@ -78,7 +78,7 @@ function update()
 end
 
 function onClick()
-  noctalia.togglePanel("strob3/dnf-updater:panel")
+  noctalia.togglePanel("fabienjuif/dnf-updater:panel")
 end
 
 function onRightClick()

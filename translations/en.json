@@ -100,7 +100,7 @@
     "storage": "Storage",
     "total": "Total"
   },
-  "title": "DNF Updater",
+  "title": "Updater",
   "tooltip": {
     "all_up_to_date": "All packages up to date",
     "disk_size": "Disk size",

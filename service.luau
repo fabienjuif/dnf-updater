@@ -549,7 +549,7 @@ end
 -- runInTerminal is fire-and-forget, so the terminal itself pings us back when done
 -- (`;`, not `&&`: a failed or partial run still changes what is pending).
 local function runInTerminalThenRecheck(cmd)
-  noctalia.runInTerminal(cmd .. "; noctalia msg plugin strob3/dnf-updater:service all check")
+  noctalia.runInTerminal(cmd .. "; noctalia msg plugin fabienjuif/dnf-updater:service all check")
 end
 
 local function updateDnf(excludedList, onFinished)

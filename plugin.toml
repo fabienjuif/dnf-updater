@@ -1,4 +1,4 @@
-id = "strob3/dnf-updater"
+id = "fabienjuif/dnf-updater"
 name = "DNF Updater"
 version = "1.0.3"
 plugin_api = 24
