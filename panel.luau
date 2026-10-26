@@ -26,6 +26,7 @@ local officialRepos = { fedora = true, updates = true, ["updates-testing"] = tru
 
 local dnfCollapsed = false
 local flatpakCollapsed = false
+local searchQuery = ""
 
 local render -- forward declaration
 
@@ -427,91 +428,111 @@ local function renderDnfSection(state)
   local header = ui.row({ key = "dnf-section-header", align = "center", gap = 8, paddingV = 4 }, headerChildren)
   table.insert(items, header)
 
+  local q = searchQuery:lower():match("^%s*(.-)%s*$") or ""
+  local visibleCount = 0
+
   if not dnfCollapsed then
 
   for idx, pkg in ipairs(packages) do
-    local isExcluded = excludedDnf[pkg.name] == true
-    local arch = (pkg.arch ~= machineArch) and (pkg.arch or "") or ""
-    local repo = ""
-    if pkg.repo and pkg.repo ~= "" and not officialRepos[pkg.repo] then
-      -- COPR repo ids ("copr:copr.fedorainfracloud.org:codifryed:CoolerControl") pushed the row wider than the panel.
-      repo = pkg.repo:match("^copr%a*:[^:]+:[^:]+:(.+)$") or pkg.repo
-    end
-    local badgeColor = isExcluded and "on_surface_variant" or "primary"
-    local badgeChildren = {}
-    if arch ~= "" then
-      table.insert(badgeChildren, ui.label({
-        text = repo ~= "" and (arch .. " ·") or arch,
-        fontSize = 10,
-        color = badgeColor .. "/0.6",
-        fontWeight = "semibold",
-      }))
-    end
-    if repo ~= "" then
-      table.insert(badgeChildren, ui.label({
-        text = repo,
-        maxWidth = 160,
-        maxLines = 1,
-        fontSize = 10,
-        color = badgeColor,
-        fontWeight = "semibold",
-      }))
-    end
+    local isMatch = (q == "")
+      or (pkg.name and pkg.name:lower():find(q, 1, true) ~= nil)
+      or (pkg.repo and pkg.repo:lower():find(q, 1, true) ~= nil)
 
-    local sizeLabel = (pkg.download_formatted and pkg.download_formatted ~= "") and pkg.download_formatted or ""
+    if isMatch then
+      visibleCount += 1
+      local isExcluded = excludedDnf[pkg.name] == true
+      local arch = (pkg.arch ~= machineArch) and (pkg.arch or "") or ""
+      local repo = ""
+      if pkg.repo and pkg.repo ~= "" and not officialRepos[pkg.repo] then
+        -- COPR repo ids ("copr:copr.fedorainfracloud.org:codifryed:CoolerControl") pushed the row wider than the panel.
+        repo = pkg.repo:match("^copr%a*:[^:]+:[^:]+:(.+)$") or pkg.repo
+      end
+      local badgeColor = isExcluded and "on_surface_variant" or "primary"
+      local badgeChildren = {}
+      if arch ~= "" then
+        table.insert(badgeChildren, ui.label({
+          text = repo ~= "" and (arch .. " ·") or arch,
+          fontSize = 10,
+          color = badgeColor .. "/0.6",
+          fontWeight = "semibold",
+        }))
+      end
+      if repo ~= "" then
+        table.insert(badgeChildren, ui.label({
+          text = repo,
+          maxWidth = 160,
+          maxLines = 1,
+          fontSize = 10,
+          color = badgeColor,
+          fontWeight = "semibold",
+        }))
+      end
 
-    local nameRowChildren = {
-      ui.label({
-        text = pkg.name or "Unknown",
-        fontSize = 12,
-        fontWeight = "semibold",
-        color = isExcluded and "on_surface_variant" or "on_surface",
-      }),
-    }
-    if isExcluded then
-      table.insert(nameRowChildren, ui.label({
-        text = "(" .. tr("status.skipped") .. ")",
-        fontSize = 10,
-        color = "on_surface_variant",
-      }))
-    end
+      local sizeLabel = (pkg.download_formatted and pkg.download_formatted ~= "") and pkg.download_formatted or ""
 
-    table.insert(items, ui.row({
-      key = "dnf-pkg-" .. tostring(idx) .. "-" .. (pkg.name or "pkg"),
-      padding = 8,
-      paddingH = 12,
-      fill = isExcluded and "surface_variant" or "surface",
-      radius = 6,
-      align = "center",
-      gap = 8,
-      onClick = function()
-        if not isBusy then
-          toggleExcludeDnf(pkg.name)
-        end
-      end,
-    }, {
-      ui.glyph({
-        name = isExcluded and "square" or "square-check",
-        size = 18,
-        color = isExcluded and "on_surface_variant" or "primary",
-      }),
-      ui.column({ gap = 2, flexGrow = 1 }, {
-        ui.row({ align = "center", gap = 6 }, nameRowChildren),
+      local nameRowChildren = {
         ui.label({
-          text = pkg.evr or "",
-          fontSize = 11,
-          color = "on_surface_variant",
-        }),
-      }),
-      ui.column({ align = "end", gap = 2 }, {
-        ui.label({
-          text = sizeLabel,
-          fontSize = 11,
-          fontWeight = "bold",
+          text = pkg.name or "Unknown",
+          fontSize = 12,
+          fontWeight = "semibold",
           color = isExcluded and "on_surface_variant" or "on_surface",
         }),
-        ui.row({ align = "center", gap = 4 }, badgeChildren),
-      }),
+      }
+      if isExcluded then
+        table.insert(nameRowChildren, ui.label({
+          text = "(" .. tr("status.skipped") .. ")",
+          fontSize = 10,
+          color = "on_surface_variant",
+        }))
+      end
+
+      table.insert(items, ui.row({
+        key = "dnf-pkg-" .. tostring(idx) .. "-" .. (pkg.name or "pkg"),
+        padding = 8,
+        paddingH = 12,
+        fill = isExcluded and "surface_variant" or "surface",
+        radius = 6,
+        align = "center",
+        gap = 8,
+        onClick = function()
+          if not isBusy then
+            toggleExcludeDnf(pkg.name)
+          end
+        end,
+      }, {
+        ui.glyph({
+          name = isExcluded and "square" or "square-check",
+          size = 18,
+          color = isExcluded and "on_surface_variant" or "primary",
+        }),
+        ui.column({ gap = 2, flexGrow = 1 }, {
+          ui.row({ align = "center", gap = 6 }, nameRowChildren),
+          ui.label({
+            text = pkg.evr or "",
+            fontSize = 11,
+            color = "on_surface_variant",
+          }),
+        }),
+        ui.column({ align = "end", gap = 2 }, {
+          ui.label({
+            text = sizeLabel,
+            fontSize = 11,
+            fontWeight = "bold",
+            color = isExcluded and "on_surface_variant" or "on_surface",
+          }),
+          ui.row({ align = "center", gap = 4 }, badgeChildren),
+        }),
+      }))
+    end
+  end
+
+  if q ~= "" and visibleCount == 0 and #packages > 0 then
+    table.insert(items, ui.label({
+      key = "dnf-no-match",
+      text = tr("search.no_matches", { query = searchQuery }),
+      fontSize = 11,
+      color = "on_surface_variant",
+      padding = 8,
     }))
   end
   end
@@ -591,79 +612,100 @@ local function renderFlatpakSection(state)
   local header = ui.row({ key = "flatpak-section-header", align = "center", gap = 8, paddingV = 4 }, headerChildren)
   table.insert(items, header)
 
+  local q = searchQuery:lower():match("^%s*(.-)%s*$") or ""
+  local visibleCount = 0
+
   if not flatpakCollapsed then
 
   for idx, pkg in ipairs(packages) do
     local pkgKey = getFlatpakKey(pkg)
-    local isExcluded = excludedFlatpak[pkgKey] == true
+    local isMatch = (q == "")
+      or (pkg.name and pkg.name:lower():find(q, 1, true) ~= nil)
+      or (pkg.id and pkg.id:lower():find(q, 1, true) ~= nil)
+      or (pkg.ref and pkg.ref:lower():find(q, 1, true) ~= nil)
 
-    local subtitle = pkg.id or pkg.branch or ""
-    if pkg.origin and pkg.origin ~= "" then
-      subtitle = subtitle ~= "" and (subtitle .. " · " .. pkg.origin) or pkg.origin
-    end
-    if pkg.is_runtime then
-      subtitle = (subtitle ~= "" and (subtitle .. " · ") or "") .. tr("sections.runtime")
-    end
+    if isMatch then
+      visibleCount += 1
+      local isExcluded = excludedFlatpak[pkgKey] == true
 
-    local sizeLabel = (pkg.download_formatted and pkg.download_formatted ~= "") and pkg.download_formatted or (pkg.install_formatted or "")
+      local subtitle = pkg.id or pkg.branch or ""
+      if pkg.origin and pkg.origin ~= "" then
+        subtitle = subtitle ~= "" and (subtitle .. " · " .. pkg.origin) or pkg.origin
+      end
+      if pkg.is_runtime then
+        subtitle = (subtitle ~= "" and (subtitle .. " · ") or "") .. tr("sections.runtime")
+      end
 
-    local nameRowChildren = {
-      ui.label({
-        text = pkg.name or "Unknown",
-        fontSize = 12,
-        fontWeight = "semibold",
-        color = isExcluded and "on_surface_variant" or "on_surface",
-      }),
-    }
-    if isExcluded then
-      table.insert(nameRowChildren, ui.label({
-        text = "(" .. tr("status.skipped") .. ")",
-        fontSize = 10,
-        color = "on_surface_variant",
-      }))
-    end
+      local sizeLabel = (pkg.download_formatted and pkg.download_formatted ~= "") and pkg.download_formatted or (pkg.install_formatted or "")
 
-    table.insert(items, ui.row({
-      key = "flatpak-pkg-" .. tostring(idx) .. "-" .. pkgKey,
-      padding = 8,
-      paddingH = 12,
-      fill = isExcluded and "surface_variant" or "surface",
-      radius = 6,
-      align = "center",
-      gap = 8,
-      onClick = function()
-        if not isBusy then
-          toggleExcludeFlatpak(pkgKey)
-        end
-      end,
-    }, {
-      ui.glyph({
-        name = isExcluded and "square" or "square-check",
-        size = 18,
-        color = isExcluded and "on_surface_variant" or "secondary",
-      }),
-      ui.column({ gap = 2, flexGrow = 1 }, {
-        ui.row({ align = "center", gap = 6 }, nameRowChildren),
+      local nameRowChildren = {
         ui.label({
-          text = subtitle,
-          fontSize = 11,
-          color = "on_surface_variant",
+          text = pkg.name or "Unknown",
+          fontSize = 12,
+          fontWeight = "semibold",
+          color = isExcluded and "on_surface_variant" or "on_surface",
         }),
-      }),
-      ui.column({ align = "end", gap = 2 }, {
-        ui.label({
-          text = sizeLabel,
-          fontSize = 11,
-          fontWeight = "bold",
-          color = isExcluded and "on_surface_variant" or "secondary",
-        }),
-        ui.label({
-          text = pkg.version or "",
+      }
+      if isExcluded then
+        table.insert(nameRowChildren, ui.label({
+          text = "(" .. tr("status.skipped") .. ")",
           fontSize = 10,
           color = "on_surface_variant",
-          fontWeight = "semibold",
+        }))
+      end
+
+      table.insert(items, ui.row({
+        key = "flatpak-pkg-" .. tostring(idx) .. "-" .. pkgKey,
+        padding = 8,
+        paddingH = 12,
+        fill = isExcluded and "surface_variant" or "surface",
+        radius = 6,
+        align = "center",
+        gap = 8,
+        onClick = function()
+          if not isBusy then
+            toggleExcludeFlatpak(pkgKey)
+          end
+        end,
+      }, {
+        ui.glyph({
+          name = isExcluded and "square" or "square-check",
+          size = 18,
+          color = isExcluded and "on_surface_variant" or "secondary",
         }),
-      }),
+        ui.column({ gap = 2, flexGrow = 1 }, {
+          ui.row({ align = "center", gap = 6 }, nameRowChildren),
+          ui.label({
+            text = subtitle,
+            fontSize = 11,
+            color = "on_surface_variant",
+          }),
+        }),
+        ui.column({ align = "end", gap = 2 }, {
+          ui.label({
+            text = sizeLabel,
+            fontSize = 11,
+            fontWeight = "bold",
+            color = isExcluded and "on_surface_variant" or "secondary",
+          }),
+          ui.label({
+            text = pkg.version or "",
+            fontSize = 10,
+            color = "on_surface_variant",
+            fontWeight = "semibold",
+          }),
+        }),
+      }))
+    end
+  end
+
+  if q ~= "" and visibleCount == 0 and #packages > 0 then
+    table.insert(items, ui.label({
+      key = "flatpak-no-match",
+      text = tr("search.no_matches", { query = searchQuery }),
+      fontSize = 11,
+      color = "on_surface_variant",
+      padding = 8,
     }))
   end
   end
@@ -683,12 +725,20 @@ render = function()
   local header = ui.row({ align = "center", gap = 8 }, {
     ui.glyph({ name = "package", size = 16, color = "primary" }),
     ui.column({ key = "panel-title-block", gap = 0 }, {
-      ui.label({
-        key = "panel-title",
-        text = total > 0 and (tr("title") .. " (" .. total .. ")") or tr("title"),
-        fontSize = 15,
-        fontWeight = "bold",
-        color = "on_surface",
+      ui.row({ align = "center", gap = 6 }, {
+        ui.label({
+          key = "panel-title",
+          text = tr("title"),
+          fontSize = 15,
+          fontWeight = "bold",
+          color = "on_surface",
+        }),
+        ui.label({
+          key = "panel-version",
+          text = pluginVersion ~= "" and ("v" .. pluginVersion) or "",
+          fontSize = 11,
+          color = "on_surface_variant",
+        }),
       }),
       ui.label({
         key = "panel-last-checked",
@@ -698,12 +748,6 @@ render = function()
         fontSize = 10,
         color = "on_surface_variant",
       }),
-    }),
-    ui.label({
-      key = "panel-version",
-      text = pluginVersion,
-      fontSize = 10,
-      color = "on_surface_variant",
     }),
     ui.spacer({ key = "header-spacer", flexGrow = 1 }),
     ui.button({
@@ -730,7 +774,54 @@ render = function()
     }),
   })
 
+  local rebootBanner = nil
+  if state and state.reboot_required then
+    rebootBanner = ui.row({
+      key = "reboot-banner",
+      padding = 8,
+      paddingH = 12,
+      fill = "warning/0.15",
+      radius = 8,
+      align = "center",
+      gap = 8,
+    }, {
+      ui.glyph({ name = "rotate-cw", size = 16, color = "warning" }),
+      ui.label({
+        text = tr("status.reboot_required"),
+        fontSize = 12,
+        fontWeight = "semibold",
+        color = "warning",
+        flexGrow = 1,
+      }),
+    })
+  end
+
   local card = statusCard(state)
+
+  local searchBar = nil
+  if total > 0 or searchQuery ~= "" then
+    local searchChildren = {
+      ui.input({
+        key = "pkg-search-input",
+        value = searchQuery,
+        placeholder = tr("actions.search_placeholder"),
+        flexGrow = 1,
+        controlSize = "sm",
+        onChange = "onSearchChange",
+      }),
+    }
+    if searchQuery ~= "" then
+      table.insert(searchChildren, ui.button({
+        key = "btn-clear-search",
+        glyph = "close",
+        variant = "ghost",
+        controlSize = "sm",
+        tooltip = tr("actions.clear_search"),
+        onClick = "onClearSearch",
+      }))
+    end
+    searchBar = ui.row({ key = "search-row", align = "center", gap = 6 }, searchChildren)
+  end
 
   -- Package list rows
   local scrollItems = {}
@@ -788,16 +879,35 @@ render = function()
     }),
   })
 
-  panel.render(ui.column({ flexGrow = 1, gap = 6, align = "stretch" }, {
+  local panelChildren = {
     header,
-    card,
-    listContainer,
-    footer,
-  }))
+  }
+  if rebootBanner then
+    table.insert(panelChildren, rebootBanner)
+  end
+  table.insert(panelChildren, card)
+  if searchBar then
+    table.insert(panelChildren, searchBar)
+  end
+  table.insert(panelChildren, listContainer)
+  table.insert(panelChildren, footer)
+
+  panel.render(ui.column({ flexGrow = 1, gap = 6, align = "stretch" }, panelChildren))
+end
+
+function onSearchChange(text)
+  searchQuery = text or ""
+  render()
+end
+
+function onClearSearch()
+  searchQuery = ""
+  render()
 end
 
 function onOpen(_context)
   updateState = noctalia.state.get("update_state")
+  searchQuery = ""
   render()
 end
 

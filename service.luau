@@ -38,6 +38,8 @@ local state = {
   },
   last_check = nil,
   last_check_timestamp = 0,
+  last_update_timestamp = 0,
+  reboot_required = false,
   error_message = nil,
 }
 
@@ -126,6 +128,7 @@ local function loadState()
   end
   state = saved
   state.status = state.error_message and "ERROR" or (state.total_count == 0 and "SUCCESS" or "IDLE")
+  state.reboot_required = saved.reboot_required == true
   previousCount = state.total_count or 0
   return true
 end
@@ -476,6 +479,39 @@ local function refreshLastUpdate()
   end)
 end
 
+local function checkReboot()
+  if noctalia.fileExists("/run/reboot-required") or noctalia.fileExists("/var/run/reboot-required") then
+    if not state.reboot_required then
+      state.reboot_required = true
+      publishState()
+    end
+    return
+  end
+
+  local dnfBin = getDnfBinary()
+  if not dnfBin then
+    return
+  end
+
+  noctalia.runAsync({ dnfBin, "--disablerepo=*", "needs-restarting", "-r", "--json" }, function(result)
+    local isReboot = false
+    if result then
+      if result.exitCode == 1 then
+        isReboot = true
+      elseif result.exitCode == 0 and result.stdout and result.stdout ~= "" then
+        local data = noctalia.json.decode(result.stdout)
+        if type(data) == "table" and data[1] and data[1].reboot_required == true then
+          isReboot = true
+        end
+      end
+    end
+    if isReboot ~= state.reboot_required then
+      state.reboot_required = isReboot
+      publishState()
+    end
+  end, 10000)
+end
+
 local function checkAll(force)
   if isChecking or isUpdating then
     return
@@ -485,6 +521,7 @@ local function checkAll(force)
   state.status = "CHECKING"
   publishState()
   refreshLastUpdate()
+  checkReboot()
 
   local dnfDone = false
   local flatpakDone = false

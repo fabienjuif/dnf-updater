@@ -1,6 +1,7 @@
 {
   "actions": {
     "check_now": "Check Now",
+    "clear_search": "Clear",
     "close": "Close",
     "collapse": "Collapse section",
     "deselect_all": "Deselect all",
@@ -8,6 +9,7 @@
     "expand": "Expand section",
     "include_pkg": "Include in update",
     "open_settings": "Settings",
+    "search_placeholder": "Search packages…",
     "select_all": "Select all",
     "update_all": "Update All",
     "update_all_size": "Update All ({count} · {size})",
@@ -82,8 +84,12 @@
     "last_checked": "Last check {time}",
     "last_update": "last update {time}",
     "never_checked": "Never checked",
+    "reboot_required": "Restart required to complete updates",
     "skipped": "Skipped",
     "updating": "Updating packages…"
+  },
+  "search": {
+    "no_matches": "No packages match \"{query}\""
   },
   "ago": {
     "days": "{n} d ago",
@@ -98,6 +104,7 @@
     "flatpak": "Flatpak",
     "last_checked": "Last Checked",
     "storage": "Storage",
+    "system": "System",
     "total": "Total"
   },
   "title": "DNF Updater",
